@@ -1,0 +1,5 @@
+.env
+*.pyc
+/workout_tracker/set_tracker/__pycache__/
+.*\.pyc
+.pytest_cache*
