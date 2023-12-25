@@ -4,6 +4,7 @@
 # from rest_framework.parsers import JSONParser
 # from rest_framework.decorators import api_view
 from rest_framework import status
+from rest_framework import mixins, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from set_tracker.models import SetTracker
@@ -12,43 +13,66 @@ from django.http import Http404
 
 # Create your views here.
 
-class TrackerList(APIView):
-    def get(self, request, format=None):
-        tracker = SetTracker.objects.all()
-        serializer =  SetTrackerSerializer(tracker, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class TrackerList(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+    queryset = SetTracker.objects.all()
+    serializer_class = SetTrackerSerializer
+
+    def get(self, request):
+        return self.list(request)
     
-    def post(self, request, format=None):
-        serializer = SetTrackerSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        return self.create(request)
     
-class TrackerDetails(APIView):
-    def get_object(self, pk):
-        try:
-            return SetTracker.objects.get(pk=pk)
-        except SetTracker.DoesNotExist:
-            return Http404
+class TrackerDetails(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+    queryset = SetTracker.objects.all()
+    serializer_class =  SetTrackerSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+    
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+    
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+# class TrackerList(APIView):
+#     def get(self, request, format=None):
+#         tracker = SetTracker.objects.all()
+#         serializer =  SetTrackerSerializer(tracker, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+#     def post(self, request, format=None):
+#         serializer = SetTrackerSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
+    
+# class TrackerDetails(APIView):
+#     def get_object(self, pk):
+#         try:
+#             return SetTracker.objects.get(pk=pk)
+#         except SetTracker.DoesNotExist:
+#             return Http404
             
-    def get(self, request, pk, format=None):
-        tracker = self.get_object(pk)
-        serializer = SetTrackerSerializer(tracker)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+#     def get(self, request, pk, format=None):
+#         tracker = self.get_object(pk)
+#         serializer = SetTrackerSerializer(tracker)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
         
-    def put(self, request, pk, format=None):
-        tracker =  self.get_object(pk=pk)
-        serializer = SetTrackerSerializer(tracker, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
+#     def put(self, request, pk, format=None):
+#         tracker =  self.get_object(pk=pk)
+#         serializer = SetTrackerSerializer(tracker, data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
         
-    def delete(self, request, pk, format=None):
-        tracker =  self.get_object(pk=pk)
-        tracker.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+#     def delete(self, request, pk, format=None):
+#         tracker =  self.get_object(pk=pk)
+#         tracker.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
         
 
 
