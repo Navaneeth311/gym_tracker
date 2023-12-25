@@ -2,48 +2,91 @@
 # from django.http import HttpResponse, JsonResponse
 # from django.views.decorators.csrf import csrf_exempt
 # from rest_framework.parsers import JSONParser
+# from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from set_tracker.models import SetTracker
 from set_tracker.serializer import SetTrackerSerializer
+from django.http import Http404
+
 # Create your views here.
 
-@api_view(['GET', 'POST'])
-def tracker_list(request, format=None):
-    if request.method == 'GET':
+class TrackerList(APIView):
+    def get(self, request, format=None):
         tracker = SetTracker.objects.all()
-        serializer = SetTrackerSerializer(tracker, many=True)
+        serializer =  SetTrackerSerializer(tracker, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    elif request.method == 'POST':
-        serializer = SetTrackerSerializer(request.data)
+    def post(self, request, format=None):
+        serializer = SetTrackerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
     
-@api_view(['GET', 'PUT', 'DELETE'])
-def tracker_details(request, pk, format=None):
-    try:
-        track = SetTracker.objects.get(pk=pk)
-    except track.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    
-    if request.method == 'GET':
-        serializer = SetTrackerSerializer(track)
-        return Response(serializer.data)
-    
-    elif request.method == 'PUT':
-        serializer = SetTrackerSerializer(track, request.data)
+class TrackerDetails(APIView):
+    def get_object(self, pk):
+        try:
+            return SetTracker.objects.get(pk=pk)
+        except SetTracker.DoesNotExist:
+            return Http404
+            
+    def get(self, request, pk, format=None):
+        tracker = self.get_object(pk)
+        serializer = SetTrackerSerializer(tracker)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    def put(self, request, pk, format=None):
+        tracker =  self.get_object(pk=pk)
+        serializer = SetTrackerSerializer(tracker, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
-    
-    elif request.method == 'DELETE':
-        track.delete()
+        
+    def delete(self, request, pk, format=None):
+        tracker =  self.get_object(pk=pk)
+        tracker.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+        
+
+
+# @api_view(['GET', 'POST'])
+# def tracker_list(request, format=None):
+#     if request.method == 'GET':
+#         tracker = SetTracker.objects.all()
+#         serializer = SetTrackerSerializer(tracker, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+#     elif request.method == 'POST':
+#         serializer = SetTrackerSerializer(request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
+    
+# @api_view(['GET', 'PUT', 'DELETE'])
+# def tracker_details(request, pk, format=None):
+#     try:
+#         track = SetTracker.objects.get(pk=pk)
+#     except track.DoesNotExist:
+#         return Response(status=status.HTTP_404_NOT_FOUND)
+    
+#     if request.method == 'GET':
+#         serializer = SetTrackerSerializer(track)
+#         return Response(serializer.data)
+    
+#     elif request.method == 'PUT':
+#         serializer = SetTrackerSerializer(track, request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(serializer.error_messages, status=status.HTTP_400_BAD_REQUEST)
+    
+#     elif request.method == 'DELETE':
+#         track.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
 
 # @csrf_exempt
 # def tracker_list(request):
