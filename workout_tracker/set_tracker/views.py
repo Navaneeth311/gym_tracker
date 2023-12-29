@@ -3,38 +3,62 @@
 # from django.views.decorators.csrf import csrf_exempt
 # from rest_framework.parsers import JSONParser
 # from rest_framework.decorators import api_view
-from rest_framework import status
+# from rest_framework import status
+from rest_framework import permissions
 from rest_framework import mixins, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from set_tracker.models import SetTracker
-from set_tracker.serializer import SetTrackerSerializer
+from set_tracker.serializer import SetTrackerSerializer, UserSerializer
+from set_tracker.permissions import IsOwnerOrReadOnly
 from django.http import Http404
+from django.contrib.auth.models import User
 
 # Create your views here.
 
-class TrackerList(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+class TrackerList(generics.ListCreateAPIView):
     queryset = SetTracker.objects.all()
     serializer_class = SetTrackerSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
-    def get(self, request):
-        return self.list(request)
-    
-    def post(self, request):
-        return self.create(request)
-    
-class TrackerDetails(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+    '''Override the serializer create method to save the owner filed'''
+    def perform_create(self, serializer):
+        serializer.save(owner = self.request.user)
+class TrackerDetails(generics.RetrieveUpdateDestroyAPIView):
     queryset = SetTracker.objects.all()
-    serializer_class =  SetTrackerSerializer
+    serializer_class = SetTrackerSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+class UserList(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class UserDetails(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+# class TrackerList(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+#     queryset = SetTracker.objects.all()
+#     serializer_class = SetTrackerSerializer
+
+#     def get(self, request):
+#         return self.list(request)
     
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
+#     def post(self, request):
+#         return self.create(request)
     
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+# class TrackerDetails(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+#     queryset = SetTracker.objects.all()
+#     serializer_class =  SetTrackerSerializer
+
+#     def get(self, request, *args, **kwargs):
+#         return self.retrieve(request, *args, **kwargs)
+    
+#     def put(self, request, *args, **kwargs):
+#         return self.update(request, *args, **kwargs)
+    
+#     def delete(self, request, *args, **kwargs):
+#         return self.destroy(request, *args, **kwargs)
 
 # class TrackerList(APIView):
 #     def get(self, request, format=None):
