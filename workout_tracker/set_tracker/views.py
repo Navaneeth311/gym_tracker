@@ -2,7 +2,7 @@
 # from django.http import HttpResponse, JsonResponse
 # from django.views.decorators.csrf import csrf_exempt
 # from rest_framework.parsers import JSONParser
-# from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view
 # from rest_framework import status
 from rest_framework import permissions
 from rest_framework import mixins, generics
@@ -13,9 +13,9 @@ from set_tracker.serializer import SetTrackerSerializer, UserSerializer
 from set_tracker.permissions import IsOwnerOrReadOnly
 from django.http import Http404
 from django.contrib.auth.models import User
+from rest_framework.reverse import reverse
 
 # Create your views here.
-
 class TrackerList(generics.ListCreateAPIView):
     queryset = SetTracker.objects.all()
     serializer_class = SetTrackerSerializer
@@ -36,6 +36,13 @@ class UserList(generics.ListAPIView):
 class UserDetails(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'users': reverse('users-list', request=request, format=format),
+        'trackers': reverse('trackers-list', request=request, format=format)
+    })
 
 # class TrackerList(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
 #     queryset = SetTracker.objects.all()
